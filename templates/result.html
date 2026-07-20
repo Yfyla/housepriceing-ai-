@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estimate — PriceAI</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: '#0a1a2c', navy2: '#0f2338', line: '#1c3b58',
+          paper: '#eef1ea', ink: '#17232e', copper: '#c1855a', cyan: '#5fd3c4'
+        },
+        fontFamily: {
+          display: ['"Space Grotesk"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body class="bg-navy text-slate-200">
+
+<div class="relative min-h-screen">
+  <div class="blueprint-grid absolute inset-0 pointer-events-none"></div>
+
+  <div class="relative max-w-4xl mx-auto px-6 py-16">
+
+    <a href="/" class="font-mono text-xs tracking-widest text-cyan hover:text-white">&larr; BACK</a>
+
+    <div class="blueprint-corners bg-paper text-ink rounded-lg p-8 sm:p-12 mt-8 shadow-2xl">
+
+      <div class="font-mono text-xs tracking-widest text-copper mb-2">RESULT SHEET</div>
+      <h1 class="font-display font-semibold text-2xl sm:text-3xl mb-8">Estimated market value</h1>
+
+      <div class="font-mono text-5xl sm:text-6xl font-semibold text-copper pop-in" style="animation-delay:.1s">
+        ${{ "{:,.0f}".format(price) }}
+      </div>
+
+      <!-- input recap -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-10 mb-12">
+        <div class="border border-slate-300 rounded-md p-3">
+          <div class="font-mono text-[10px] uppercase text-slate-500 mb-1">Income</div>
+          <div class="font-mono text-sm">${{ "{:,.0f}".format(income) }}</div>
+        </div>
+        <div class="border border-slate-300 rounded-md p-3">
+          <div class="font-mono text-[10px] uppercase text-slate-500 mb-1">Age</div>
+          <div class="font-mono text-sm">{{ age }} yrs</div>
+        </div>
+        <div class="border border-slate-300 rounded-md p-3">
+          <div class="font-mono text-[10px] uppercase text-slate-500 mb-1">Rooms</div>
+          <div class="font-mono text-sm">{{ rooms }}</div>
+        </div>
+        <div class="border border-slate-300 rounded-md p-3">
+          <div class="font-mono text-[10px] uppercase text-slate-500 mb-1">Bedrooms</div>
+          <div class="font-mono text-sm">{{ bedrooms }}</div>
+        </div>
+        <div class="border border-slate-300 rounded-md p-3 col-span-2 sm:col-span-1">
+          <div class="font-mono text-[10px] uppercase text-slate-500 mb-1">Population</div>
+          <div class="font-mono text-sm">{{ "{:,.0f}".format(population) }}</div>
+        </div>
+      </div>
+
+      <!-- regression chart -->
+      <div class="border-t border-slate-300 pt-8">
+        <h2 class="font-display text-lg mb-1">Income vs. price</h2>
+        <p class="text-xs text-slate-500 mb-4 max-w-md">
+          Your prediction against a sample of the training data. Illustrative only —
+          the model itself weighs all five inputs together, not income alone.
+        </p>
+        <svg id="chart" viewBox="0 0 640 320" class="w-full"></svg>
+      </div>
+
+      <a href="/" class="inline-block mt-10 font-mono text-sm uppercase tracking-widest text-white bg-ink hover:bg-black px-6 py-3 rounded-md transition-colors">
+        Predict another house
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const samplePoints = {{ sample_points | tojson }};
+  const userPoint = { income: {{ income }}, price: {{ price }} };
+
+  const svg = document.getElementById('chart');
+  const W = 640, H = 320, M = { l: 60, r: 20, t: 10, b: 34 };
+
+  const allPoints = samplePoints.concat([userPoint]);
+  const xs = allPoints.map(p => p.income);
+  const ys = allPoints.map(p => p.price);
+  const xMin = Math.min(...xs), xMax = Math.max(...xs);
+  const yMin = Math.min(...ys), yMax = Math.max(...ys);
+
+  const xTo = v => M.l + ((v - xMin) / (xMax - xMin)) * (W - M.l - M.r);
+  const yTo = v => H - M.b - ((v - yMin) / (yMax - yMin)) * (H - M.t - M.b);
+
+  // simple least-squares fit over the sample, for display only
+  const n = samplePoints.length;
+  const sumX = samplePoints.reduce((s, p) => s + p.income, 0);
+  const sumY = samplePoints.reduce((s, p) => s + p.price, 0);
+  const sumXY = samplePoints.reduce((s, p) => s + p.income * p.price, 0);
+  const sumX2 = samplePoints.reduce((s, p) => s + p.income * p.income, 0);
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+
+  let svgMarkup = '';
+
+  // axes
+  svgMarkup += `<line x1="${M.l}" y1="${H - M.b}" x2="${W - M.r}" y2="${H - M.b}" stroke="#c7cfc3" stroke-width="1"/>`;
+  svgMarkup += `<line x1="${M.l}" y1="${M.t}" x2="${M.l}" y2="${H - M.b}" stroke="#c7cfc3" stroke-width="1"/>`;
+  svgMarkup += `<text x="${M.l}" y="${H - 10}" font-family="JetBrains Mono" font-size="10" fill="#7a8478">income →</text>`;
+  svgMarkup += `<text x="8" y="${M.t + 10}" font-family="JetBrains Mono" font-size="10" fill="#7a8478">price</text>`;
+
+  // sample points
+  samplePoints.forEach(p => {
+    svgMarkup += `<circle cx="${xTo(p.income).toFixed(1)}" cy="${yTo(p.price).toFixed(1)}" r="3" fill="#5fd3c4" opacity="0.55"/>`;
+  });
+
+  // regression line
+  const x1 = xMin, x2 = xMax;
+  const y1 = slope * x1 + intercept, y2 = slope * x2 + intercept;
+  const lineLen = Math.hypot(xTo(x2) - xTo(x1), yTo(y2) - yTo(y1));
+  svgMarkup += `<line x1="${xTo(x1).toFixed(1)}" y1="${yTo(y1).toFixed(1)}" x2="${xTo(x2).toFixed(1)}" y2="${yTo(y2).toFixed(1)}"
+                 stroke="#17232e" stroke-width="1.5" class="draw" style="--len:${lineLen.toFixed(0)}"/>`;
+
+  // user's point
+  svgMarkup += `<circle cx="${xTo(userPoint.income).toFixed(1)}" cy="${yTo(userPoint.price).toFixed(1)}" r="7"
+                 fill="#c1855a" stroke="#17232e" stroke-width="1.5" class="pop-in" style="animation-delay:.9s"/>`;
+
+  svg.innerHTML = svgMarkup;
+</script>
+
+</body>
+</html>

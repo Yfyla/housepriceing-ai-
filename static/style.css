@@ -1,0 +1,121 @@
+/* ==========================================================
+   FONTS
+   Space Grotesk  -> display / headlines
+   Inter          -> body copy, UI text
+   JetBrains Mono -> data, labels, coordinates, price digits
+========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ==========================================================
+   TOKENS
+========================================================== */
+:root{
+  --navy: #0a1a2c;      /* page background            */
+  --navy-2: #0f2338;    /* raised panels on navy       */
+  --line: #1c3b58;      /* hairlines / grid            */
+  --paper: #eef1ea;     /* "spec sheet" card surface   */
+  --ink: #17232e;       /* text on paper                */
+  --copper: #c1855a;    /* primary accent / CTA / price */
+  --cyan: #5fd3c4;      /* technical accent, ticks     */
+}
+
+*{ box-sizing: border-box; }
+
+html{ scroll-behavior: smooth; }
+
+body{
+  background: var(--navy);
+  color: #dfe7ee;
+  font-family: 'Inter', sans-serif;
+}
+
+.font-display{ font-family:'Space Grotesk', sans-serif; }
+.font-mono{ font-family:'JetBrains Mono', monospace; }
+
+/* ==========================================================
+   BLUEPRINT GRID BACKGROUND
+========================================================== */
+.blueprint-grid{
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 40%, transparent 90%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 40%, transparent 90%);
+  opacity: .5;
+}
+
+/* ==========================================================
+   DRAFTING-CORNER BRACKETS (used on the paper card + panels)
+========================================================== */
+.blueprint-corners{ position: relative; }
+.blueprint-corners::before,
+.blueprint-corners::after,
+.blueprint-corners .corner-tl,
+.blueprint-corners .corner-br{ content:""; position:absolute; width:18px; height:18px; }
+.blueprint-corners::before{ top:-1px; left:-1px; border-top:2px solid var(--copper); border-left:2px solid var(--copper); }
+.blueprint-corners::after{ bottom:-1px; right:-1px; border-bottom:2px solid var(--copper); border-right:2px solid var(--copper); }
+
+/* ==========================================================
+   DASHED LEADER LINES (hero house callouts)
+========================================================== */
+.leader-line{
+  stroke: var(--cyan);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  opacity: .8;
+}
+
+/* ==========================================================
+   DRAW-IN ANIMATION for svg paths (house outline, regression line)
+========================================================== */
+.draw{
+  stroke-dasharray: var(--len, 1000);
+  stroke-dashoffset: var(--len, 1000);
+  animation: draw 1.6s ease forwards;
+}
+@keyframes draw{ to{ stroke-dashoffset: 0; } }
+
+.pop-in{ animation: pop .5s cubic-bezier(.2,1.4,.4,1) forwards; opacity:0; transform: scale(.4); transform-origin: center; }
+@keyframes pop{ to{ opacity:1; transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce){
+  .draw, .pop-in{ animation: none !important; stroke-dashoffset: 0 !important; opacity:1 !important; transform:none !important; }
+}
+
+/* ==========================================================
+   FORM FIELDS (paper card)
+========================================================== */
+.spec-input{
+  width:100%;
+  background: #ffffff;
+  border: 1px solid #cfd6c9;
+  color: var(--ink);
+  padding: 13px 14px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.spec-input::placeholder{ color:#9aa39a; }
+.spec-input:focus{
+  border-color: var(--copper);
+  box-shadow: 0 0 0 3px rgba(193,133,90,.18);
+}
+
+/* ==========================================================
+   SCROLLBAR + SELECTION
+========================================================== */
+::-webkit-scrollbar{ width: 9px; }
+::-webkit-scrollbar-track{ background: var(--navy); }
+::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 20px; }
+::-webkit-scrollbar-thumb:hover{ background: var(--cyan); }
+::selection{ background: var(--copper); color: #1a1004; }
+
+/* keyboard focus visibility across the page */
+a:focus-visible, button:focus-visible, input:focus-visible{
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
