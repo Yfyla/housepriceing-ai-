@@ -84,7 +84,7 @@
 
 <script>
   const samplePoints = {{ sample_points | tojson }};
-  const userPoint = { income: {{ income }}, price: {{ price }} };
+  const userPoint = { income: { income }}, price: {{ price }} };
 
   const svg = document.getElementById('chart');
   const W = 640, H = 320, M = { l: 60, r: 20, t: 10, b: 34 };
