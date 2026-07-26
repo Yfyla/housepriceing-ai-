@@ -1,23 +1,17 @@
 from flask import Flask, render_template, request
 import pickle
 import pandas as pd
+import os
 
 app = Flask(__name__)
 
-# Load the trained model
-model = pickle.load(open("model.pkl", "rb"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Load a small sample of the training data once at startup, purely so the
-# result page can plot a new prediction alongside real data points
-# (income vs. price). This doesn't affect the prediction itself.
-housing = pd.read_csv("housing.csv")
-sample = housing[["Avg. Area Income", "Price"]].sample(n=60, random_state=7)
-SAMPLE_POINTS = [
-    {"income": round(row["Avg. Area Income"]), "price": round(row["Price"])}
-    for _, row in sample.iterrows()
-]
-
-
+try:
+    model = pickle.load(open(os.path.join(BASE_DIR, "model.pkl"), "rb"))
+    housing = pd.read_csv(os.path.join(BASE_DIR, "housing.csv"))
+except Exception as e:
+    raise Exception(f"Startup Error: {e}")
 @app.route("/")
 def home():
     return render_template("index.html")
